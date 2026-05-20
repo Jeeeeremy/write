@@ -211,15 +211,86 @@ body{background:var(--bg);font-family:'Noto Sans SC',sans-serif;color:var(--ink)
   cursor:pointer;color:var(--green-mid);
 }
 .search-hint span:hover{text-decoration:underline}
+
+/* ─── HEADER COPY ── */
+.site-subtitle{font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;letter-spacing:0.04em}
+.site-desc{font-size:11px;color:rgba(255,255,255,0.45);margin-top:3px}
+.header-bottom{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px;flex-wrap:wrap}
+.upload-btn{
+  background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.35);
+  color:#fff;font-size:12px;font-weight:500;padding:6px 16px;border-radius:20px;
+  cursor:pointer;letter-spacing:0.04em;transition:all 0.18s;
+  font-family:'Noto Sans SC',sans-serif;
+}
+.upload-btn:hover{background:rgba(255,255,255,0.28)}
+
+/* ─── AI UPLOAD MODAL ─── */
+.ai-overlay{
+  display:none;position:fixed;inset:0;z-index:300;
+  background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);
+  justify-content:center;align-items:center;padding:20px;
+}
+.ai-overlay.open{display:flex}
+.ai-modal{
+  background:#fff;border-radius:24px;width:100%;max-width:420px;
+  overflow:hidden;box-shadow:0 20px 80px rgba(0,0,0,0.4);
+}
+.ai-modal-header{
+  background:linear-gradient(135deg,#0e2a1a,#1a5c36);
+  padding:20px;text-align:center;color:#fff;
+}
+.ai-modal-header h2{font-family:'Noto Serif SC',serif;font-size:1.1rem;font-weight:700}
+.ai-modal-header p{font-size:11px;color:rgba(255,255,255,0.6);margin-top:4px}
+.ai-modal-body{padding:20px}
+.ai-photo-preview{
+  width:100%;height:200px;border-radius:14px;object-fit:cover;
+  display:block;background:#e8f0e8;margin-bottom:16px;
+}
+.ai-photo-placeholder{
+  width:100%;height:200px;border-radius:14px;border:2px dashed var(--border);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;color:var(--muted);font-size:13px;margin-bottom:16px;cursor:pointer;
+  background:var(--green-pale);
+}
+.ai-photo-placeholder span{font-size:2.5rem}
+.ai-status{
+  text-align:center;padding:12px;border-radius:12px;font-size:13px;
+  margin-bottom:12px;display:none;
+}
+.ai-status.loading{display:block;background:#e8f5ec;color:var(--green)}
+.ai-status.error{display:block;background:#fde8e8;color:#8c1a1a}
+.ai-status.success{display:block;background:#e8f5ec;color:#0e4020}
+.ai-actions{display:flex;gap:8px}
+.ai-btn{
+  flex:1;padding:11px;border-radius:12px;font-size:13px;font-weight:500;
+  cursor:pointer;border:none;font-family:'Noto Sans SC',sans-serif;transition:all 0.15s;
+}
+.ai-btn-primary{background:var(--green);color:#fff}
+.ai-btn-primary:hover{background:#1a4a28}
+.ai-btn-primary:disabled{background:#9ab8a0;cursor:not-allowed}
+.ai-btn-cancel{background:#f0f4f0;color:var(--muted)}
+.ai-btn-cancel:hover{background:#e0e8e0}
+.ai-result-preview{
+  background:var(--green-pale);border:1px solid var(--border);border-radius:12px;
+  padding:14px;margin-bottom:14px;display:none;
+}
+.ai-result-preview.show{display:block}
+.ai-result-name{font-family:'Noto Serif SC',serif;font-size:15px;font-weight:700;color:var(--green)}
+.ai-result-la{font-size:11px;color:var(--muted);font-style:italic;margin-top:2px;margin-bottom:8px}
+.ai-result-tags{display:flex;flex-wrap:wrap;gap:5px}
+.ai-result-tag{font-size:11px;background:#fff;border:1px solid var(--border);color:var(--ink);padding:3px 9px;border-radius:8px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(45,92,58,0.2);border-top-color:var(--green);border-radius:50%;animation:spin 0.8s linear infinite;margin-right:6px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
 <!-- ─── HEADER ─── -->
 <div class="site-header">
-  <h1>🌿 植物养护图鉴</h1>
-  <p>上传植物照片，AI 识别 · 自动生成养护卡片</p>
-  <div class="plant-count" id="plant-count">共收录 8 种植物</div>
+  <h1>🌿 绿野识物</h1>
+  <p class="site-subtitle">拍照识别 · 读懂每一株绿色生命</p>
+  <p class="site-desc">全球植物养护知识库，由 AI 与爱植物的人共同编写</p>
+  <div class="header-bottom"><div class="plant-count" id="plant-count">共收录 8 种植物</div><button class="upload-btn" onclick="document.getElementById('file-input').click()">📷 上传识别</button><input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleUpload(event)"></div>
 </div>
 
 
@@ -243,6 +314,37 @@ body{background:var(--bg);font-family:'Noto Sans SC',sans-serif;color:var(--ink)
     <span onclick="doSearch('净化空气')">净化空气</span>
     <span onclick="doSearch('天南星')">天南星科</span>
     <span onclick="doSearch('有毒')">有毒</span>
+  </div>
+</div>
+
+
+<!-- ─── AI UPLOAD MODAL ─── -->
+<div class="ai-overlay" id="ai-overlay" onclick="closeAiModal(event)">
+  <div class="ai-modal" id="ai-modal">
+    <div class="ai-modal-header">
+      <h2>🔍 AI 植物识别</h2>
+      <p>上传照片，自动识别植物并生成养护卡片</p>
+    </div>
+    <div class="ai-modal-body">
+      <div id="ai-preview-wrap">
+        <div class="ai-photo-placeholder" id="ai-placeholder" onclick="document.getElementById('file-input').click()">
+          <span>📷</span>
+          <div>点击选择植物照片</div>
+          <div style="font-size:11px;color:#aab8aa">支持 JPG / PNG / HEIC</div>
+        </div>
+        <img id="ai-preview-img" class="ai-photo-preview" style="display:none" alt="preview">
+      </div>
+      <div class="ai-status" id="ai-status"></div>
+      <div class="ai-result-preview" id="ai-result-preview">
+        <div class="ai-result-name" id="ai-result-name"></div>
+        <div class="ai-result-la" id="ai-result-la"></div>
+        <div class="ai-result-tags" id="ai-result-tags"></div>
+      </div>
+      <div class="ai-actions">
+        <button class="ai-btn ai-btn-cancel" onclick="closeAiOverlay()">取消</button>
+        <button class="ai-btn ai-btn-primary" id="ai-identify-btn" onclick="identifyPlant()" disabled>识别植物</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -304,8 +406,7 @@ body{background:var(--bg);font-family:'Noto Sans SC',sans-serif;color:var(--ink)
 </div>
 
 <!-- ─── FAB ─── -->
-<button class="fab" onclick="alert('发送植物照片给 Claude，识别后自动添加到这里！')">＋</button>
-<div class="fab-tooltip">上传新植物</div>
+
 
 <script>
 // ══════════════════════════════════════════
@@ -719,6 +820,164 @@ function closeOverlay() {
   document.body.style.overflow = '';
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeOverlay(); });
+
+
+// ══════════════════════════════════════════
+// AI PLANT IDENTIFICATION
+// ══════════════════════════════════════════
+let uploadedImageB64 = null;
+let identifiedPlant = null;
+
+function handleUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
+    uploadedImageB64 = dataUrl.split(',')[1];
+    // show preview
+    const img = document.getElementById('ai-preview-img');
+    img.src = dataUrl;
+    img.style.display = 'block';
+    document.getElementById('ai-placeholder').style.display = 'none';
+    document.getElementById('ai-identify-btn').disabled = false;
+    // reset state
+    setAiStatus('');
+    document.getElementById('ai-result-preview').classList.remove('show');
+    identifiedPlant = null;
+    document.getElementById('ai-identify-btn').textContent = '识别植物';
+    // open modal
+    document.getElementById('ai-overlay').classList.add('open');
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function setAiStatus(msg, type='loading') {
+  const el = document.getElementById('ai-status');
+  if (!msg) { el.style.display='none'; return; }
+  el.className = `ai-status ${type}`;
+  el.innerHTML = msg;
+  el.style.display = 'block';
+}
+
+async function identifyPlant() {
+  if (!uploadedImageB64) return;
+  const btn = document.getElementById('ai-identify-btn');
+
+  // If already identified, add to encyclopedia
+  if (identifiedPlant) {
+    addPlantToEncyclopedia(identifiedPlant);
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>AI 识别中…';
+  setAiStatus('<span class="spinner"></span>正在分析植物照片，请稍候…', 'loading');
+
+  const prompt = `你是一位专业的植物学家和园艺专家。请仔细观察这张植物照片，识别植物种类，并以 JSON 格式返回完整的养护信息。
+
+只返回 JSON，不要任何解释，格式如下：
+{
+  "cn": "中文名（含品种）",
+  "la": "学名（拉丁文）",
+  "family": "所属科，只能是以下之一：araceae/marantaceae/moraceae/asparagaceae/fabaceae/cactaceae/orchidaceae/other",
+  "familyName": "科名中文，如天南星科",
+  "diff": "容易程度：easy/mid/hard",
+  "diffText": "如 ★★ 中等",
+  "light": "光照：shade/indirect/bright",
+  "lightText": "光照描述",
+  "water": "浇水：drought/moderate/wet",
+  "waterText": "浇水描述",
+  "heroBg": "CSS渐变背景色，和植物叶色相匹配",
+  "desc": "50-80字植物介绍，包含形态特征和观赏价值",
+  "tags": ["4-6个标签，如净化空气、耐旱、有毒等"],
+  "temp": "适宜温度范围和最低温度",
+  "humidity": "适宜湿度范围和耐受能力描述",
+  "soil": [{"n":"土壤成分名","p":百分比数字}],
+  "ph": "pH范围和土壤特点描述",
+  "origin": "原产地名称",
+  "originDesc": "50字原生环境描述",
+  "diffStars": 1到5的数字,
+  "seasons": ["春季养护要点","夏季养护要点","秋季养护要点","冬季养护要点"],
+  "tip": "100字以内的核心养护要点，分条说明",
+  "warn": "常见问题和注意事项，分条说明"
+}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: uploadedImageB64 } },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error?.message || '请求失败');
+
+    const text = data.content.find(b => b.type === 'text')?.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('无法解析识别结果');
+
+    identifiedPlant = JSON.parse(jsonMatch[0]);
+    identifiedPlant.id = 'user_' + Date.now();
+    identifiedPlant.photo = null;
+    identifiedPlant.userPhoto = uploadedImageB64;
+
+    // Show result preview
+    document.getElementById('ai-result-name').textContent = identifiedPlant.cn;
+    document.getElementById('ai-result-la').textContent = identifiedPlant.la;
+    const tagsEl = document.getElementById('ai-result-tags');
+    tagsEl.innerHTML = (identifiedPlant.tags||[]).map(t=>`<span class="ai-result-tag">${t}</span>`).join('');
+    document.getElementById('ai-result-preview').classList.add('show');
+
+    setAiStatus('✅ 识别成功！确认后点击"加入图鉴"', 'success');
+    btn.disabled = false;
+    btn.textContent = '加入图鉴 ＋';
+
+  } catch(err) {
+    setAiStatus('❌ 识别失败：' + err.message + '。请重试。', 'error');
+    btn.disabled = false;
+    btn.textContent = '重新识别';
+    identifiedPlant = null;
+  }
+}
+
+function addPlantToEncyclopedia(p) {
+  // Store user photo in PHOTOS map
+  if (p.userPhoto) {
+    PHOTOS[p.id] = p.userPhoto;
+    p.photo = p.id;
+  }
+  // Add to front of array
+  PLANTS.unshift(p);
+  // Update count
+  document.getElementById('plant-count').textContent = `共收录 ${PLANTS.length} 种植物`;
+  // Close modal & refresh
+  closeAiOverlay();
+  renderGrid();
+  setAiStatus('');
+  // Scroll to top to show new plant
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function closeAiModal(e) {
+  if (e.target === document.getElementById('ai-overlay')) closeAiOverlay();
+}
+function closeAiOverlay() {
+  document.getElementById('ai-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
 
 // Init
 renderGrid();
